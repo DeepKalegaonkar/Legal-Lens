@@ -1,62 +1,36 @@
-import './App.css'
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import connectDB from './config/db.js'
+import authRoutes from './routes/authRoutes.js'
+import uploadRoutes from './routes/uploadRoutes.js'
 
-function HomePlaceholder() {
-  return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 60 }}>
-      <img
-        src="https://cdn-icons-png.flaticon.com/512/5353/5353345.png"
-        alt="Legal Document"
-        className="hero-image"
-        onError={() => console.warn('Hero image failed to load')}
-      />
-      <div style={{ flex: 1 }}>
-        <h1 style={{ color: '#003366', marginBottom: 12 }}>LegalLens</h1>
-        <p style={{ color: '#333', fontSize: 18, lineHeight: 1.5 }}>
-          Upload contracts and get multi-clause classification & risk detection.
-          Sign up to try it out.
-        </p>
-      </div>
-    </div>
-  )
-}
+dotenv.config()
 
-function App() {
-  console.log('App mounted, REACT_APP_API_URL =', process.env.REACT_APP_API_URL)
+const app = express()
+connectDB() //Connect to MongoDB
 
-  return (
-    <Router>
-      <div className="app-container">
-        <nav className="navbar" role="navigation" aria-label="Main navigation">
-          <div className="navbar-logo">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/5353/5353345.png"
-              alt="Logo"
-              width="40"
-              height="40"
-              onError={() => console.warn('Navbar logo failed to load')}
-            />
-            <span>LegalLens</span>
-          </div>
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  })
+)
+app.use(express.json())
 
-          <ul className="nav-links nav-right" aria-hidden={false}>
-            <li><Link to="/login">Login</Link></li>
-            <li><Link to="/signup">Sign up</Link></li>
-          </ul>
-        </nav>
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<HomePlaceholder />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
-  )
-}
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+app.use('/api', authRoutes)
+app.use('/api/upload', uploadRoutes)
 
-export default App
+app.get('/', (req, res) => {
+  res.send('✅ LegalLens backend server is running...')
+})
+
+const PORT = process.env.PORT || 5000
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`))

@@ -1,12 +1,16 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
+  const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setMessage('')
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/login`, {
         method: 'POST',
@@ -14,9 +18,16 @@ export default function Login() {
         body: JSON.stringify({ email, password })
       })
       const data = await response.json()
+
       if (response.ok) {
-        setMessage('✅ Login successful!')
-        console.log(data)
+        setMessage('✅ Login Successful!')
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('user', JSON.stringify(data.user))
+
+        // Small delay before redirect
+        setTimeout(() => {
+          navigate('/upload')
+        }, 1000)
       } else {
         setMessage(`⚠️ ${data.message}`)
       }
