@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { UserContext } from '../context/UserContext'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
+  const { loginUser } = useContext(UserContext)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -15,24 +17,33 @@ export default function Login() {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(), // 🔹 Always lowercase
+          password,
+        }),
       })
+
       const data = await response.json()
 
       if (response.ok) {
-        setMessage('✅ Login Successful!')
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
+        // ✅ Save user globally and locally
+        loginUser(data.user, data.token)
+        setMessage('✅ Login successful! Redirecting...')
 
-        // Small delay before redirect
+        // 🔹 Redirect based on role
         setTimeout(() => {
-          navigate('/upload')
-        }, 1000)
+          if (data.user.role === 'admin') {
+            navigate('/admin-home') // Admin gets their own dashboard
+          } else {
+            navigate('/upload')
+          }
+        }, 800)
       } else {
-        setMessage(`⚠️ ${data.message}`)
+        setMessage(`⚠️ ${data.message || 'Invalid credentials.'}`)
       }
     } catch (err) {
-      setMessage('❌ Error connecting to server')
+      console.error('Login error:', err)
+      setMessage('❌ Error connecting to server.')
     }
   }
 
@@ -42,9 +53,9 @@ export default function Login() {
       <form onSubmit={handleSubmit}>
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Email Address"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value.toLowerCase())}
           required
         />
         <input
@@ -54,8 +65,11 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit" className="form-btn">Login</button>
+        <button type="submit" className="form-btn">
+          Login
+        </button>
       </form>
+
       {message && <p className="auth-message">{message}</p>}
     </div>
   )

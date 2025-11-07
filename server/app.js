@@ -6,11 +6,11 @@ import { fileURLToPath } from 'url'
 import connectDB from './config/db.js'
 import authRoutes from './routes/authRoutes.js'
 import uploadRoutes from './routes/uploadRoutes.js'
+import adminRoutes from './routes/adminRoutes.js'
 
 dotenv.config()
 
 const app = express()
-connectDB() //Connect to MongoDB
 
 app.use(
   cors({
@@ -26,6 +26,7 @@ const __dirname = path.dirname(__filename)
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 app.use('/api', authRoutes)
+app.use('/api/admin', adminRoutes)
 app.use('/api/upload', uploadRoutes)
 
 app.get('/', (req, res) => {
@@ -33,4 +34,6 @@ app.get('/', (req, res) => {
 })
 
 const PORT = process.env.PORT || 5000
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`))
+connectDB().then(() => {
+  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`))
+})

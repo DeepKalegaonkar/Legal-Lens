@@ -1,18 +1,39 @@
 import './App.css'
-import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from 'react-router-dom'
+import { useContext } from 'react'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Upload from './pages/Upload'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminHome from './pages/AdminHome'
+import UserHome from './pages/UserHome'
+import { UserContext, UserProvider } from './context/UserContext'
 
-// ✅ Navbar Component
-function Navbar({ user, isLoggedIn, onLogout }) {
+//Navbar Component
+function Navbar() {
+  const location = useLocation()
+  const { user, isLoggedIn, logoutUser } = useContext(UserContext)
+
   return (
     <nav className="navbar">
-      {/* Logo + Brand */}
+      {/* Logo */}
       <div className="navbar-logo">
         <Link
-          to="/"
+          to={
+            isLoggedIn
+              ? user?.role === 'admin'
+                ? '/admin-home'
+                : '/user-home'
+              : '/'
+          }
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -29,7 +50,7 @@ function Navbar({ user, isLoggedIn, onLogout }) {
         </Link>
       </div>
 
-      {/* Links */}
+      {/* Navbar Links */}
       <ul
         className="nav-links"
         style={{
@@ -42,29 +63,26 @@ function Navbar({ user, isLoggedIn, onLogout }) {
       >
         {isLoggedIn ? (
           <>
-            <li style={{ color: '#0054c2', fontWeight: 600 }}>
-              👋 Welcome, <span className="highlight">{user?.name || 'User'}</span>
-            </li>
-            <li>
-              <button
-                onClick={onLogout}
-                style={{
-                  background: 'linear-gradient(90deg, #2077ff, #0054c2)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 12px rgba(32, 119, 255, 0.25)',
-                }}
-                onMouseOver={(e) => (e.target.style.opacity = 0.9)}
-                onMouseOut={(e) => (e.target.style.opacity = 1)}
-              >
-                Logout
-              </button>
-            </li>
+            {/* Only show greeting if NOT on upload/admin pages */}
+            {!['/upload', '/admin', '/admin-home', '/user-home'].includes(location.pathname) && (
+              <li style={{ color: '#003366', fontWeight: 600 }}>
+                👋 Hello, <span className="highlight">{user?.name}</span>{' '}
+                <button
+                  onClick={logoutUser}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#2077ff',
+                    cursor: 'pointer',
+                    marginLeft: '5px',
+                    textDecoration: 'underline',
+                    fontWeight: 500,
+                  }}
+                >
+                  Not you?
+                </button>
+              </li>
+            )}
           </>
         ) : (
           <>
@@ -107,12 +125,18 @@ function Navbar({ user, isLoggedIn, onLogout }) {
   )
 }
 
-// ✅ Home Page
+// ✅ Default Landing Page (for visitors)
 function HomePage() {
   const navigate = useNavigate()
+  const { user, isLoggedIn } = useContext(UserContext)
 
   const handleGetStarted = () => {
-    navigate('/signup')
+    if (isLoggedIn) {
+      if (user?.role === 'admin') navigate('/admin-home')
+      else navigate('/user-home')
+    } else {
+      navigate('/signup')
+    }
   }
 
   return (
@@ -129,8 +153,7 @@ function HomePage() {
           Welcome to <span className="highlight">LegalLens</span>
         </h1>
         <p>
-          Upload legal contracts and get clause classification and risk detection
-          insights powered by advanced AI.
+          Upload legal contracts and get clause classification and risk detection insights powered by advanced AI.
         </p>
         <button onClick={handleGetStarted} className="cta-btn">
           Get Started
@@ -140,63 +163,68 @@ function HomePage() {
   )
 }
 
-// ✅ Protected Route Wrapper
+// ✅ Protected Route
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem('token')
-  return token ? children : <Navigate to="/login" />
+  const { isLoggedIn } = useContext(UserContext)
+  if (!isLoggedIn) return <Navigate to="/login" replace />
+  return children
 }
 
 // ✅ Main App
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [user, setUser] = useState(null)
-
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    const storedUser = localStorage.getItem('user')
-    if (token && storedUser) {
-      setIsLoggedIn(true)
-      setUser(JSON.parse(storedUser))
-    } else {
-      setIsLoggedIn(false)
-    }
-  }, [])
-
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setIsLoggedIn(false)
-    setUser(null)
-    window.location.href = '/login'
-  }
-
   return (
-    <Router>
-      <div className="app-container">
-        <Navbar user={user} isLoggedIn={isLoggedIn} onLogout={handleLogout} />
+    <UserProvider>
+      <Router>
+        <div className="app-container">
+          <Navbar />
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
 
-        {/* Main Routes */}
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+              {/* User Pages */}
+              <Route
+                path="/user-home"
+                element={
+                  <ProtectedRoute>
+                    <UserHome />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/upload"
+                element={
+                  <ProtectedRoute>
+                    <Upload />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* ✅ Upload is protected */}
-            <Route
-              path="/upload"
-              element={
-                <ProtectedRoute>
-                  <Upload />
-                </ProtectedRoute>
-              }
-            />
+              {/* Admin Pages */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin-home"
+                element={
+                  <ProtectedRoute>
+                    <AdminHome />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
+        </div>
+      </Router>
+    </UserProvider>
   )
 }
 

@@ -294,3 +294,29 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(32, 119, 255, 0.35);
 }
+
+.address-input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 18px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fafafa;
+  color: #111;
+  font-size: 1rem;
+  resize: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-sizing: border-box;
+  height: 80px; /* Balanced height */
+}
+
+.address-input:focus {
+  border-color: #2077ff;
+  box-shadow: 0 0 8px rgba(32, 119, 255, 0.25);
+  outline: none;
+}
+
+.address-input::placeholder {
+  color: #888;
+  font-size: 0.95rem;
+}

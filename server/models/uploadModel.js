@@ -1,11 +1,13 @@
-const mongoose = require('mongoose')
+import mongoose from "mongoose"
 
 const uploadSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   fileName: String,
   filePath: String,
   analysisResult: Object,
-  uploadedAt: { type: Date, default: Date.now }
+  uploadedAt: { type: Date, default: Date.now },
 })
 
-module.exports = mongoose.model('Upload', uploadSchema)
+const Upload = mongoose.model("Upload", uploadSchema)
+
+export default Upload
