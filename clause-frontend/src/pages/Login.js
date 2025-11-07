@@ -1,10 +1,12 @@
-import { useState, useContext } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useContext, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { UserContext } from '../context/UserContext'
+import { Eye, EyeOff } from 'lucide-react' // 👁️ icons (auto available in shadcn/lucide-react setup)
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
   const { loginUser } = useContext(UserContext)
@@ -18,7 +20,7 @@ export default function Login() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: email.toLowerCase().trim(), // 🔹 Always lowercase
+          email: email.toLowerCase().trim(),
           password,
         }),
       })
@@ -26,17 +28,12 @@ export default function Login() {
       const data = await response.json()
 
       if (response.ok) {
-        // ✅ Save user globally and locally
         loginUser(data.user, data.token)
         setMessage('✅ Login successful! Redirecting...')
 
-        // 🔹 Redirect based on role
         setTimeout(() => {
-          if (data.user.role === 'admin') {
-            navigate('/admin-home') // Admin gets their own dashboard
-          } else {
-            navigate('/upload')
-          }
+          if (data.user.role === 'admin') navigate('/admin-home')
+          else navigate('/user-home')
         }, 800)
       } else {
         setMessage(`⚠️ ${data.message || 'Invalid credentials.'}`)
@@ -50,27 +47,115 @@ export default function Login() {
   return (
     <div className="auth-container">
       <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
+
+      <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+        {/* Email Input */}
         <input
           type="email"
           placeholder="Email Address"
           value={email}
           onChange={(e) => setEmail(e.target.value.toLowerCase())}
           required
+          style={{
+            width: '100%',
+            padding: '14px',
+            marginBottom: '18px',
+            border: '1px solid #ccc',
+            borderRadius: '8px',
+            backgroundColor: '#fafafa',
+            color: '#111',
+            fontSize: '1rem',
+            boxSizing: 'border-box',
+          }}
         />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit" className="form-btn">
+
+        {/* Password Input */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            marginBottom: '18px',
+          }}
+        >
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{
+              width: '100%',
+              padding: '14px 40px 14px 14px',
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              backgroundColor: '#fafafa',
+              color: '#111',
+              fontSize: '1rem',
+              boxSizing: 'border-box',
+            }}
+          />
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: 'absolute',
+              right: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              cursor: 'pointer',
+              color: '#0054c2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </span>
+        </div>
+
+        <button type="submit" className="form-btn" style={{ width: '100%' }}>
           Login
         </button>
       </form>
 
-      {message && <p className="auth-message">{message}</p>}
+      {/* Message */}
+      {message && (
+        <p
+          className="auth-message"
+          style={{
+            marginTop: '10px',
+            color:
+              message.startsWith('✅') ? 'green' :
+              message.startsWith('⚠️') ? '#e6a500' :
+              'red',
+          }}
+        >
+          {message}
+        </p>
+      )}
+
+      {/* Sign-up redirect */}
+      <p
+        style={{
+          marginTop: '20px',
+          fontSize: '0.95rem',
+          color: '#333',
+          textAlign: 'center',
+        }}
+      >
+        Don’t have an account?{' '}
+        <Link
+          to="/signup"
+          style={{
+            color: '#0054c2',
+            fontWeight: 600,
+            textDecoration: 'none',
+          }}
+          onMouseOver={(e) => (e.target.style.textDecoration = 'underline')}
+          onMouseOut={(e) => (e.target.style.textDecoration = 'none')}
+        >
+          Sign up here!
+        </Link>
+      </p>
     </div>
   )
 }

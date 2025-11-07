@@ -15,7 +15,7 @@ body {
   flex-direction: column;
 }
 
-/* ✅ Navbar */
+/* Navbar */
 .navbar {
   background: linear-gradient(90deg, #ffffff, #f2f5f9);
   border-bottom: 2px solid #d6e2f5;

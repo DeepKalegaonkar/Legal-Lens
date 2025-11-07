@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export default function Signup() {
@@ -13,6 +13,8 @@ export default function Signup() {
   const [errors, setErrors] = useState({})
   const navigate = useNavigate()
 
+
+
   const validatePasswordStrength = (value) => {
     const length = value.length >= 8
     const upper = /[A-Z]/.test(value)
@@ -24,7 +26,7 @@ export default function Signup() {
     if ((length && upper && lower) || (length && number)) return 'Medium'
     return 'Weak'
   }
-
+  
   const handlePasswordChange = (e) => {
     const value = e.target.value
     setPassword(value)

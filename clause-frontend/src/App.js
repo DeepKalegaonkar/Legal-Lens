@@ -8,7 +8,7 @@ import {
   useNavigate,
   useLocation,
 } from 'react-router-dom'
-import { useContext } from 'react'
+import { useContext, useEffect } from 'react'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Upload from './pages/Upload'
@@ -17,14 +17,37 @@ import AdminHome from './pages/AdminHome'
 import UserHome from './pages/UserHome'
 import { UserContext, UserProvider } from './context/UserContext'
 
-//Navbar Component
+// ✅ PageTitle Component – watches the current path
+function PageTitle() {
+  const location = useLocation()
+
+  useEffect(() => {
+    const path = location.pathname
+
+    if (path === '/' || path === '/user-home' || path === '/admin-home')
+      document.title = 'LegalLens | Home'
+    else if (path === '/login')
+      document.title = 'LegalLens | Login'
+    else if (path === '/signup')
+      document.title = 'LegalLens | Sign Up'
+    else if (path === '/upload')
+      document.title = 'LegalLens | Upload Document'
+    else if (path === '/admin')
+      document.title = 'LegalLens | Admin Dashboard'
+    else
+      document.title = 'LegalLens'
+  }, [location])
+
+  return null // No UI — just updates title
+}
+
+// ✅ Navbar Component
 function Navbar() {
   const location = useLocation()
   const { user, isLoggedIn, logoutUser } = useContext(UserContext)
 
   return (
     <nav className="navbar">
-      {/* Logo */}
       <div className="navbar-logo">
         <Link
           to={
@@ -50,7 +73,6 @@ function Navbar() {
         </Link>
       </div>
 
-      {/* Navbar Links */}
       <ul
         className="nav-links"
         style={{
@@ -63,7 +85,6 @@ function Navbar() {
       >
         {isLoggedIn ? (
           <>
-            {/* Only show greeting if NOT on upload/admin pages */}
             {!['/upload', '/admin', '/admin-home', '/user-home'].includes(location.pathname) && (
               <li style={{ color: '#003366', fontWeight: 600 }}>
                 👋 Hello, <span className="highlight">{user?.name}</span>{' '}
@@ -96,8 +117,6 @@ function Navbar() {
                   fontSize: '1.05rem',
                   transition: 'all 0.3s ease',
                 }}
-                onMouseOver={(e) => (e.target.style.color = '#2077ff')}
-                onMouseOut={(e) => (e.target.style.color = '#0054c2')}
               >
                 Login
               </Link>
@@ -112,8 +131,6 @@ function Navbar() {
                   fontSize: '1.05rem',
                   transition: 'all 0.3s ease',
                 }}
-                onMouseOver={(e) => (e.target.style.color = '#2077ff')}
-                onMouseOut={(e) => (e.target.style.color = '#0054c2')}
               >
                 Sign up
               </Link>
@@ -125,7 +142,7 @@ function Navbar() {
   )
 }
 
-// ✅ Default Landing Page (for visitors)
+// ✅ Home Page
 function HomePage() {
   const navigate = useNavigate()
   const { user, isLoggedIn } = useContext(UserContext)
@@ -175,6 +192,7 @@ function App() {
   return (
     <UserProvider>
       <Router>
+        <PageTitle /> {/* ✅ Handles all title updates */}
         <div className="app-container">
           <Navbar />
           <main className="main-content">
